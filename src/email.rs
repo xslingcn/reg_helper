@@ -58,7 +58,7 @@ pub fn fetch_email() -> Result<String, imap::Error> {
                 date_header, from_header, content
             );
 
-            if from_header.contains("me@xsl.sh") {
+            if from_header.contains("notify-noreply@uw.edu") {
                 println!("Notify.UW email found!");
                 let date = mailparse::dateparse(&date_header).unwrap();
                 let now = Utc::now();
