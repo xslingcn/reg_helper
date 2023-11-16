@@ -1,13 +1,14 @@
-use std::net::TcpStream;
 use crate::config::CONFIG;
 use crate::register;
 use chrono::{Duration, TimeZone, Utc};
-use imap::{Session, Error};
+use imap::Session;
 use mailparse::*;
 use native_tls::{TlsConnector, TlsStream};
 use regex::Regex;
+use std::error::Error;
+use std::net::TcpStream;
 
-pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Error> {
+pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Box<dyn Error>> {
     let tls = TlsConnector::builder().build()?;
     let client = imap::connect(
         (CONFIG.email.imap_host.as_str(), CONFIG.email.imap_port),
@@ -24,12 +25,16 @@ pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Error> {
     Ok(imap_session)
 }
 
-pub fn close_imap_session(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<String, Error> {
+pub fn close_imap_session(
+    imap_session: &mut Session<TlsStream<TcpStream>>,
+) -> Result<String, Box<dyn Error>> {
     imap_session.logout()?;
     Ok("Logged out...".to_string())
 }
 
-pub fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<String, imap::Error> {
+pub async fn fetch_email(
+    imap_session: &mut Session<TlsStream<TcpStream>>,
+) -> Result<String, Box<dyn Error>> {
     imap_session.select("INBOX")?;
     println!("Inbox selected...");
 
@@ -37,10 +42,9 @@ pub fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<S
     let date_str = yesterday.format("%d-%b-%Y").to_string();
     let query = format!("UNSEEN SINCE {}", date_str);
     let messages = imap_session.search(query)?;
-    println!("Messages found: {:?}", messages);
 
     if messages.is_empty() {
-        println!("No unread messages.");
+        return Ok("No unread messages.".to_string());
     } else {
         for msg_id in messages.iter() {
             println!("Loading message `{}`", &msg_id);
@@ -68,7 +72,7 @@ pub fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<S
                 date_header, from_header, content
             );
 
-            if from_header.contains("notify-noreply@uw.edu") {
+            if from_header.contains("me@xsl.sh") {
                 println!("Notify.UW email found!");
                 let date = mailparse::dateparse(&date_header).unwrap();
                 let now = Utc::now();
@@ -79,20 +83,14 @@ pub fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<S
                     if let Some(caps) = re.captures(&content) {
                         let sln = caps.get(1).unwrap().as_str();
                         println!("Extracted SLN: {}", &sln);
-
-                        register::register(sln).map_err(|err| {
-                            eprintln!("Failed to register: {}", err);
-                            imap::Error::Bad("Failed to register".to_string())
-                        })?;
-
                         imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
+                        return register::register(sln).await;
                     }
                 } else {
-                    println!("That's been too long ago (> 1 min)");
+                    println!("That's been too long ago (> 1 min) :(");
                 }
             }
         }
+        Ok("Read complete and nothing interesting.".to_string())
     }
-
-    Ok("Fetch complete.".to_string())
 }

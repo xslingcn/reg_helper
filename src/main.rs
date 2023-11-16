@@ -7,7 +7,8 @@ mod register;
 #[tokio::main]
 async fn main() {
     let mut interval = time::interval(Duration::from_secs(30));
-    let mut session_reinit_timer = time::interval(Duration::from_secs(2 * 60 * 60));
+    let mut session_reinit_timer = time::interval(Duration::from_secs(1 * 60 * 60));
+    let mut shib_session_refresh_timer = time::interval(Duration::from_secs(1 * 60 * 60));
 
     println!("Logging into IMAP...");
     let mut session_init_time = Instant::now();
@@ -23,7 +24,7 @@ async fn main() {
         tokio::select! {
             _ = interval.tick() => {
                 println!("Fetching Email at: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
-                match email::fetch_email(&mut session) {
+                match email::fetch_email(&mut session).await {
                     Ok(r) => println!("{}", r),
                     Err(err) => eprintln!("Error fetching email: {}", err),
                 }
@@ -48,6 +49,15 @@ async fn main() {
                     }
                 }
                 session_init_time = Instant::now();
+            }
+            _ = shib_session_refresh_timer.tick() => {
+                match register::refresh_shib_session().await {
+                    Ok(r) => println!("{}", r),
+                    Err(err) => {
+                        eprintln!("Error refreshing shib session: {}", err);
+                        return;
+                    }
+                }
             }
         }
     }
