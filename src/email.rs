@@ -1,6 +1,6 @@
 use crate::config::CONFIG;
 use crate::register;
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{Duration, Local, TimeZone, Utc};
 use imap::Session;
 use mailparse::*;
 use native_tls::{TlsConnector, TlsStream};
@@ -30,6 +30,23 @@ pub fn close_imap_session(
 ) -> Result<String, Box<dyn Error>> {
     imap_session.logout()?;
     Ok("Logged out...".to_string())
+}
+
+pub async fn idle(
+    imap_session: &mut Session<TlsStream<TcpStream>>,
+) -> Result<String, Box<dyn Error>> {
+    imap_session.select("INBOX")?;
+    println!("Inbox selected...");
+
+    let idle = imap_session.idle()?;
+    println!("Idling...");
+
+    idle.wait_keepalive()?;
+    println!(
+        "Update received on {}",
+        Local::now().format("%Y-%m-%d %H:%M:%S")
+    );
+    return fetch_email(imap_session).await;
 }
 
 pub async fn fetch_email(
@@ -72,7 +89,8 @@ pub async fn fetch_email(
                 date_header, from_header, content
             );
 
-            if from_header.contains("me@xsl.sh") {
+            // notify-noreply@uw.edu
+            if from_header.contains("notify-noreply@uw.edu") {
                 println!("Notify.UW email found!");
                 let date = mailparse::dateparse(&date_header).unwrap();
                 let now = Utc::now();
