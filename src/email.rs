@@ -1,25 +1,35 @@
-use crate::config::CONFIG;
-use crate::register;
+use std::net::TcpStream;
+use crate::{register, config};
 use chrono::{Duration, TimeZone, Utc};
+use imap::{Session, Error};
 use mailparse::*;
-use native_tls::TlsConnector;
+use native_tls::{TlsConnector, TlsStream};
 use regex::Regex;
 
-pub fn fetch_email() -> Result<String, imap::Error> {
-    let tls = TlsConnector::builder().build().unwrap();
+pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Error> {
+    let conf = config::get_config();
+    let tls = TlsConnector::builder().build()?;
     let client = imap::connect(
-        (CONFIG.email.imap_host.as_str(), CONFIG.email.imap_port),
-        &CONFIG.email.imap_host,
+        (conf.email.imap_host.as_str(), conf.email.imap_port),
+        &conf.email.imap_host,
         &tls,
-    )
-    .unwrap();
+    )?;
     println!("Client prepared...");
 
-    let mut imap_session = client
-        .login(&CONFIG.email.imap_username, &CONFIG.email.imap_password)
+    let imap_session = client
+        .login(&conf.email.imap_username, &conf.email.imap_password)
         .map_err(|e| e.0)?;
-    println!("Logged in...");
 
+    println!("Logged in...");
+    Ok(imap_session)
+}
+
+pub fn close_imap_session(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<String, Error> {
+    imap_session.logout()?;
+    Ok("Logged out...".to_string())
+}
+
+pub fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> Result<String, imap::Error> {
     imap_session.select("INBOX")?;
     println!("Inbox selected...");
 
@@ -84,6 +94,5 @@ pub fn fetch_email() -> Result<String, imap::Error> {
         }
     }
 
-    imap_session.logout()?;
-    Ok("Logged Out!".to_string())
+    Ok("Fetch complete.".to_string())
 }
