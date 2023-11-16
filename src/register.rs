@@ -19,8 +19,13 @@ pub fn register(sln: &str) -> Result<String, reqwest::Error> {
 
     let client = reqwest::blocking::Client::new();
     let response = client.get(&url).headers(headers).send()?;
+    let body = response.text()?;
 
-    println!("Response Status: {}", response.status());
-    println!("Response Body: {:?}", response.text()?);
-    Ok("Request Complete!".to_string())
+    println!("Response Body: {:?}", &body);
+
+    if body.contains("Schedule updated.") {
+        Ok("Schedule updated.".to_string())
+    } else {
+        Ok("Schedule not updated.".to_string())
+    }
 }
