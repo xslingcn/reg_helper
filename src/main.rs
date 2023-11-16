@@ -4,5 +4,8 @@ mod config;
 
 fn main() {
     println!("Fetching Email...");
-    email::fetch_email();
+    match email::fetch_email() {
+        Ok(r) => println!("{}", r),
+        Err(err) => eprintln!("{}", err),
+    }
 }
