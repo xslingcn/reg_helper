@@ -1,13 +1,13 @@
+use lazy_static::lazy_static;
 use serde_derive::Deserialize;
 use std::fs;
 use std::process::exit;
-use lazy_static::lazy_static;
 use toml;
 
 #[derive(Deserialize)]
 pub struct Config {
     pub email: Email,
-    pub reg: Registration
+    pub reg: Registration,
 }
 
 #[derive(Deserialize)]
@@ -25,7 +25,7 @@ pub struct Registration {
     pub shibsession_content: String,
     pub cw: String,
     pub quarter: u8,
-    pub year: u16
+    pub year: u16,
 }
 
 impl Config {
@@ -55,4 +55,3 @@ impl Config {
 lazy_static! {
     pub static ref CONFIG: Config = Config::new("config.toml");
 }
-

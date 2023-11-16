@@ -17,9 +17,9 @@ pub fn fetch_email() -> Result<String, imap::Error> {
 
     let mut imap_session = client
         .login(&CONFIG.email.imap_username, &CONFIG.email.imap_password)
-        .map_err(|e| { e.0 })?;
+        .map_err(|e| e.0)?;
     println!("Logged in...");
-    
+
     imap_session.select("INBOX")?;
     println!("Inbox selected...");
 
@@ -34,9 +34,7 @@ pub fn fetch_email() -> Result<String, imap::Error> {
     } else {
         for msg_id in messages.iter() {
             println!("Loading message `{}`", &msg_id);
-            let message_chain =
-                imap_session
-                    .fetch(msg_id.to_string(), "RFC822")?;
+            let message_chain = imap_session.fetch(msg_id.to_string(), "RFC822")?;
             let message = if let Some(m) = message_chain.iter().next() {
                 m
             } else {
@@ -79,8 +77,7 @@ pub fn fetch_email() -> Result<String, imap::Error> {
 
                         imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
                     }
-                }
-                else {
+                } else {
                     println!("That's been too long ago (> 1 min)");
                 }
             }

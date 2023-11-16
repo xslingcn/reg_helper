@@ -1,6 +1,6 @@
+mod config;
 mod email;
 mod register;
-mod config;
 
 fn main() {
     println!("Fetching Email...");
