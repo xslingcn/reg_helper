@@ -113,7 +113,7 @@ pub async fn fetch_email(
                     println!("That's been too long ago (> 1 min) :(");
                 }
             } else {
-                println!("'From:' not found in the email string.");
+                println!("Not from Notify.UW.");
             }
         }
         Ok("Read complete and nothing interesting.".to_string())
