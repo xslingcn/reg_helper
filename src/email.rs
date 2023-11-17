@@ -2,7 +2,7 @@ use crate::config::CONFIG;
 use crate::register;
 use chrono::{Duration, Local, TimeZone, Utc};
 use imap::Session;
-use mailparse::*;
+use mail_parser::MessageParser;
 use native_tls::{TlsConnector, TlsStream};
 use regex::Regex;
 use std::error::Error;
@@ -41,7 +41,7 @@ pub async fn idle(
     let idle = imap_session.idle()?;
     println!("Idling...");
 
-    idle.wait_keepalive()?;
+    idle.wait_with_timeout(std::time::Duration::from_secs(15 * 60))?;
     println!(
         "Update received on {}",
         Local::now().format("%Y-%m-%d %H:%M:%S")
@@ -74,27 +74,32 @@ pub async fn fetch_email(
             };
 
             let body = message.body().expect("Message did not have a body!");
+            let text = std::str::from_utf8(body)
+                .expect("message was not valid utf-8")
+                .to_string();
 
-            let mail = mailparse::parse_mail(body).unwrap();
-            let (date_header, from_header, content) = match (
-                mail.headers.get_first_value("Date"),
-                mail.headers.get_first_value("From"),
-                mail.subparts.get(0).and_then(|p| p.get_body().ok()),
+            let mail = MessageParser::default().parse(&text).unwrap();
+            let (date, from, content) = match (
+                mail.date(),
+                mail.from().unwrap().first(),
+                mail.body_text(0),
             ) {
                 (Some(date), Some(from), Some(content)) => (date, from, content),
-                _ => continue,
+                _ => {
+                    println!("Failed to parse email with ID `{}`", msg_id);
+                    continue;
+                }
             };
-            println!(
-                "Email parsed: \nDate: `{}`\nFrom: `{}`\nContent: `{}`",
-                date_header, from_header, content
-            );
 
             // notify-noreply@uw.edu
-            if from_header.contains("notify-noreply@uw.edu") {
+            if from.address().unwrap().contains("notify-noreply@uw.edu"){
                 println!("Notify.UW email found!");
-                let date = mailparse::dateparse(&date_header).unwrap();
+                println!(
+                "Date: `{}`\nFrom: `{}`\nContent: `{}`",
+                date.to_rfc3339(), from.address().unwrap(), content
+            );
                 let now = Utc::now();
-                if now.signed_duration_since(Utc.timestamp_opt(date, 0).unwrap())
+                if now.signed_duration_since(Utc.timestamp_opt(date.to_timestamp(), 0).unwrap())
                     < Duration::minutes(1)
                 {
                     let re = Regex::new(r"SLN: (\d{5})").unwrap();
@@ -107,6 +112,8 @@ pub async fn fetch_email(
                 } else {
                     println!("That's been too long ago (> 1 min) :(");
                 }
+            } else {
+                println!("'From:' not found in the email string.");
             }
         }
         Ok("Read complete and nothing interesting.".to_string())
