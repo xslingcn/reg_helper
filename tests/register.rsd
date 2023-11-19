@@ -1,0 +1,10 @@
+#[cfg(test)]
+mod tests {
+    use crate::register::parse_status;
+
+    #[test]
+    fn parse_status_test() {
+        let res = "\r\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n...";
+        assert_eq!(parse_status(res).unwrap(), "STAT 311 B:  This section is closed, and no alternate sections are open.");
+    }
+}

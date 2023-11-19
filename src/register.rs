@@ -32,16 +32,27 @@ pub(crate) async fn register(sln: &str) -> RegResult<String> {
 
 fn parse_status(res: &str) -> RegResult<String> {
     let document = Html::parse_document(res);
+    
+    for index in 1..11 {
+        let selector_str = format!("input[name=\"dup{}\"] + td", index);
+        let selector = Selector::parse(&selector_str).unwrap();
+        let next_selector_str = format!("input[name=\"dup{}\"] + td", index + 1);
+        let next_selector = Selector::parse(&next_selector_str).unwrap();
+        println!("Selector: {}", selector_str);
 
-    let selector = Selector::parse("input[name=\"dup4\"] + td").unwrap();
-
-    if let Some(td_element) = document.select(&selector).next() {
-        let text = td_element.text().collect::<Vec<_>>().join(" ");
-        Ok(text)
-    } else {
-        println!("{:?}", res);
-        Err(RegError::ElementNotFound("input".to_string()))?
+        if let Some(next_td_element) = document.select(&next_selector).next() {
+            if next_td_element
+                .select(&Selector::parse("b").unwrap())
+                .next()
+                .is_none()
+            {
+                if let Some(td_element) = document.select(&selector).next() {
+                    return Ok(td_element.text().collect::<Vec<_>>().join(" "))
+                }
+            }
+        }
     }
+    Err(RegError::ElementNotFound("status text".to_string()))
 }
 
 pub(crate) async fn refresh_shib_session() -> RegResult<String> {
