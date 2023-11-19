@@ -1,0 +1,51 @@
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+    use std::time::SystemTime;
+
+    use thirtyfour::prelude::*;
+    use thirtyfour::cookie::SameSite;
+
+    #[tokio::test]
+    async fn add_cookie_by_domain_test() {
+        let driver = create_session().await.unwrap();
+
+        let cookie1 = Cookie::build("test1", "1")
+            .domain("a.g.com")
+            .path("/")
+            .secure(true)
+            .http_only(true)
+            .same_site(SameSite::Lax)
+            .finish();
+
+        let cookie2 = Cookie::build("test2", "abcd")
+            .domain("t.xsl.sh")
+            .path("/")
+            .secure(true)
+            .http_only(true)
+            .same_site(SameSite::Lax)
+            .expires(SystemTime::now() + std::time::Duration::new(31536000, 0))
+            .finish();
+
+        let cookie3 = Cookie::build("test3", "12321")
+            .domain("t.xsl.sh")
+            .path("/")
+            .secure(true)
+            .http_only(true)
+            .same_site(SameSite::Lax)
+            .expires(SystemTime::now() + std::time::Duration::new(16070400, 0))
+            .finish();
+
+        let cookies = vec![cookie1, cookie2, cookie3];
+        reg_helper::webdrive::add_cookie_by_domain(&driver, "t.xsl.sh".to_string(), cookies.clone())
+            .await
+            .unwrap();
+    }
+
+    async fn create_session() -> Result<WebDriver, Box<dyn Error>> {
+        let mut caps = DesiredCapabilities::chrome();
+        caps.add_chrome_arg("--headless")?;
+        let driver = WebDriver::new("http://localhost:9515", caps).await?;
+        Ok(driver)
+    }
+}

@@ -6,8 +6,8 @@ imap_port = 993
 imap_ssl = true
 
 [reg]
-shibsession_name = "_shibsession_abcdefgxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx123456"
-shibsession_content = "_hijklmn0000000000000000000123456"
 cw = "abcdefgxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx123456"
 quarter = 1
 year = 2024
+netid = "yay"
+password = "bibabopababibo"

@@ -21,11 +21,11 @@ pub struct Email {
 
 #[derive(Deserialize)]
 pub struct Registration {
-    pub shibsession_name: String,
-    pub shibsession_content: String,
     pub cw: String,
     pub quarter: u8,
     pub year: u16,
+    pub netid: String,
+    pub password: String,
 }
 
 impl Config {

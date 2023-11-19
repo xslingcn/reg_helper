@@ -1,8 +1,10 @@
-use crate::config::CONFIG;
+use crate::cookie;
+use crate::error::{RegError, RegResult};
+use crate::{config::CONFIG, webdrive};
 use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
-use std::error::Error;
+use scraper::{Html, Selector};
 
-pub async fn register(sln: &str) -> Result<String, Box<dyn Error>> {
+pub async fn register(sln: &str) -> RegResult<String> {
     println!("Registering for SLN: {}", sln);
     let url = format!(
         "https://sdb.admin.uw.edu/students/UWNetID/register.asp?INPUTFORM=UPDATE&PAC=0&MAXDROPS=0&_CW={}&QTR={}&YR={}&sln1={}&entCode1=&credits1=&gr_sys1=",
@@ -10,10 +12,7 @@ pub async fn register(sln: &str) -> Result<String, Box<dyn Error>> {
     );
     println!("Requesting URL: {}", url);
 
-    let cookie = format!(
-        "{}={}",
-        CONFIG.reg.shibsession_name, CONFIG.reg.shibsession_content
-    );
+    let cookie = cookie::get_cookie_str("sdb.admin.uw.edu".to_string()).await?;
     let mut headers = HeaderMap::new();
     headers.insert(COOKIE, HeaderValue::from_str(&cookie).unwrap());
     println!("Headers: {:?}", headers);
@@ -22,23 +21,34 @@ pub async fn register(sln: &str) -> Result<String, Box<dyn Error>> {
     let response = client.get(&url).headers(headers).send().await?;
     let body = response.text().await?;
 
-    println!("Response Body: {:?}", &body);
-
     if body.contains("Schedule updated.") {
         Ok("Schedule updated.".to_string())
     } else {
-        Err("Schedule not updated.".to_string())?
+        let reason = parse_status(&body)?;
+        Err(crate::error::RegError::RegFailedError(reason))?
     }
 }
-pub async fn refresh_shib_session() -> Result<String, Box<dyn Error>> {
+
+fn parse_status(res: &str) -> RegResult<String> {
+    let document = Html::parse_document(res);
+
+    let selector = Selector::parse("input[name=\"dup4\"] + td").unwrap();
+
+    if let Some(td_element) = document.select(&selector).next() {
+        let text = td_element.text().collect::<Vec<_>>().join(" ");
+        Ok(text)
+    } else {
+        println!("{:?}", res);
+        Err(RegError::ElementNotFound("input".to_string()))?
+    }
+}
+
+pub async fn refresh_shib_session() -> RegResult<String> {
     println!("Refreshing Shibboleth session...");
     let url = "https://sdb.admin.uw.edu/students/UWNetID/register.asp";
     println!("Requesting URL: {}", url);
 
-    let cookie = format!(
-        "{}={}",
-        CONFIG.reg.shibsession_name, CONFIG.reg.shibsession_content
-    );
+    let cookie = cookie::get_cookie_str("sdb.admin.uw.edu".to_string()).await?;
     let mut headers = HeaderMap::new();
     headers.insert(COOKIE, HeaderValue::from_str(&cookie).unwrap());
     println!("Headers: {:?}", headers);
@@ -47,10 +57,8 @@ pub async fn refresh_shib_session() -> Result<String, Box<dyn Error>> {
     let response = client.get(url).headers(headers).send().await?;
     let body = response.text().await?;
 
-    println!("Response Body: {:?}", &body);
-
     if body.contains("Stale Request") {
-        Err("Stale Request. Please update cookie manually")?
+        return webdrive::saml_refresh().await;
     } else {
         Ok("shib_session kept alive ".to_string())
     }

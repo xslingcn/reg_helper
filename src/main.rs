@@ -3,9 +3,16 @@ use tokio::time::{self, Duration, Instant};
 mod config;
 mod email;
 mod register;
+mod webdrive;
+mod cookie;
+mod error;
 
 #[tokio::main]
 async fn main() {
+    let _ = color_eyre::install();
+
+    webdrive::saml_login().await.unwrap();
+
     let mut interval = time::interval(Duration::from_secs(15));
     let mut session_reinit_timer = time::interval(Duration::from_secs(1 * 60 * 60));
     let mut shib_session_refresh_timer = time::interval(Duration::from_secs(1 * 60 * 60));

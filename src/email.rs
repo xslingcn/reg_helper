@@ -1,14 +1,13 @@
-use crate::config::CONFIG;
 use crate::register;
+use crate::{config::CONFIG, error::RegResult};
 use chrono::{Duration, Local, TimeZone, Utc};
 use imap::Session;
 use mail_parser::MessageParser;
 use native_tls::{TlsConnector, TlsStream};
 use regex::Regex;
-use std::error::Error;
 use std::net::TcpStream;
 
-pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Box<dyn Error>> {
+pub fn init_imap_session() -> RegResult<Session<TlsStream<TcpStream>>> {
     let tls = TlsConnector::builder().build()?;
     let client = imap::connect(
         (CONFIG.email.imap_host.as_str(), CONFIG.email.imap_port),
@@ -25,18 +24,13 @@ pub fn init_imap_session() -> Result<Session<TlsStream<TcpStream>>, Box<dyn Erro
     Ok(imap_session)
 }
 
-pub fn close_imap_session(
-    imap_session: &mut Session<TlsStream<TcpStream>>,
-) -> Result<String, Box<dyn Error>> {
+pub fn close_imap_session(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.logout()?;
     Ok("Logged out...".to_string())
 }
 
-pub async fn idle(
-    imap_session: &mut Session<TlsStream<TcpStream>>,
-) -> Result<String, Box<dyn Error>> {
+pub async fn idle(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.select("INBOX")?;
-    println!("Inbox selected...");
 
     let idle = imap_session.idle()?;
     println!("Idling...");
@@ -49,11 +43,8 @@ pub async fn idle(
     return fetch_email(imap_session).await;
 }
 
-pub async fn fetch_email(
-    imap_session: &mut Session<TlsStream<TcpStream>>,
-) -> Result<String, Box<dyn Error>> {
+pub async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.select("INBOX")?;
-    println!("Inbox selected...");
 
     let yesterday = (Utc::now() - Duration::days(1)).date_naive();
     let date_str = yesterday.format("%d-%b-%Y").to_string();
@@ -79,25 +70,25 @@ pub async fn fetch_email(
                 .to_string();
 
             let mail = MessageParser::default().parse(&text).unwrap();
-            let (date, from, content) = match (
-                mail.date(),
-                mail.from().unwrap().first(),
-                mail.body_text(0),
-            ) {
-                (Some(date), Some(from), Some(content)) => (date, from, content),
-                _ => {
-                    println!("Failed to parse email with ID `{}`", msg_id);
-                    continue;
-                }
-            };
+            let (date, from, content) =
+                match (mail.date(), mail.from().unwrap().first(), mail.body_text(0)) {
+                    (Some(date), Some(from), Some(content)) => (date, from, content),
+                    _ => {
+                        println!("Failed to parse email with ID `{}`", msg_id);
+                        continue;
+                    }
+                };
 
             // notify-noreply@uw.edu
-            if from.address().unwrap().contains("notify-noreply@uw.edu"){
+            if from.address().unwrap().contains("notify-noreply@uw.edu") {
                 println!("Notify.UW email found!");
                 println!(
-                "Date: `{}`\nFrom: `{}`\nContent: `{}`",
-                date.to_rfc3339(), from.address().unwrap(), content
-            );
+                    "Date: `{}`\nFrom: `{}`\nContent: `{}`",
+                    date.to_rfc3339(),
+                    from.address().unwrap(),
+                    content
+                );
+                imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
                 let now = Utc::now();
                 if now.signed_duration_since(Utc.timestamp_opt(date.to_timestamp(), 0).unwrap())
                     < Duration::minutes(1)
@@ -106,7 +97,6 @@ pub async fn fetch_email(
                     if let Some(caps) = re.captures(&content) {
                         let sln = caps.get(1).unwrap().as_str();
                         println!("Extracted SLN: {}", &sln);
-                        imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
                         return register::register(sln).await;
                     }
                 } else {
