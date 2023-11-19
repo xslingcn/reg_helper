@@ -5,7 +5,7 @@ use crate::cookie;
 use crate::error::{RegError, RegResult};
 use crate::{config::CONFIG, webdrive};
 
-pub async fn register(sln: &str) -> RegResult<String> {
+pub(crate) async fn register(sln: &str) -> RegResult<String> {
     println!("Registering for SLN: {}", sln);
     let url = format!(
         "https://sdb.admin.uw.edu/students/UWNetID/register.asp?INPUTFORM=UPDATE&PAC=0&MAXDROPS=0&_CW={}&QTR={}&YR={}&sln1={}&entCode1=&credits1=&gr_sys1=",
@@ -44,7 +44,7 @@ fn parse_status(res: &str) -> RegResult<String> {
     }
 }
 
-pub async fn refresh_shib_session() -> RegResult<String> {
+pub(crate) async fn refresh_shib_session() -> RegResult<String> {
     println!("Refreshing Shibboleth session...");
     let url = "https://sdb.admin.uw.edu/students/UWNetID/register.asp";
     println!("Requesting URL: {}", url);

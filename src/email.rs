@@ -8,7 +8,7 @@ use std::net::TcpStream;
 use crate::register;
 use crate::{config::CONFIG, error::RegResult};
 
-pub fn init_imap_session() -> RegResult<Session<TlsStream<TcpStream>>> {
+pub(crate) fn init_imap_session() -> RegResult<Session<TlsStream<TcpStream>>> {
     let tls = TlsConnector::builder().build()?;
     let client = imap::connect(
         (CONFIG.email.imap_host.as_str(), CONFIG.email.imap_port),
@@ -25,12 +25,12 @@ pub fn init_imap_session() -> RegResult<Session<TlsStream<TcpStream>>> {
     Ok(imap_session)
 }
 
-pub fn close_imap_session(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
+pub(crate) fn close_imap_session(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.logout()?;
     Ok("Logged out...".to_string())
 }
 
-pub async fn idle(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
+pub(crate) async fn idle(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.select("INBOX")?;
 
     let idle = imap_session.idle()?;
@@ -44,7 +44,7 @@ pub async fn idle(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult
     return fetch_email(imap_session).await;
 }
 
-pub async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
+pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.select("INBOX")?;
 
     let yesterday = (Utc::now() - Duration::days(1)).date_naive();

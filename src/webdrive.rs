@@ -11,7 +11,7 @@ async fn create_session() -> RegResult<WebDriver> {
     Ok(driver)
 }
 
-pub async fn saml_login() -> RegResult<String> {
+pub(crate) async fn saml_login() -> RegResult<String> {
     let driver = create_session().await?;
 
     add_cookie(&driver, "idp.u.washington.edu".to_string())
@@ -50,7 +50,7 @@ pub async fn saml_login() -> RegResult<String> {
     Ok("Logged in!".to_string())
 }
 
-pub async fn saml_refresh() -> RegResult<String> {
+pub(crate) async fn saml_refresh() -> RegResult<String> {
     let driver = create_session().await?;
 
     add_cookie(&driver, "sdb.admin.uw.edu".to_string())

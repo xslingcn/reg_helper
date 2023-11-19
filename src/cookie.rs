@@ -9,12 +9,12 @@ lazy_static! {
     static ref GLOBAL_COOKIE: Arc<Mutex<HashMap<String, Vec<Cookie<'static>>>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
-pub async fn update_cookies(domain: String, new_cookies: Vec<Cookie<'static>>) {
+pub(crate) async fn update_cookies(domain: String, new_cookies: Vec<Cookie<'static>>) {
     let mut cookie = GLOBAL_COOKIE.lock().await;
     cookie.insert(domain, new_cookies);
 }
 
-pub async fn get_cookies(domain: String) -> Option<Vec<Cookie<'static>>> {
+pub(crate) async fn get_cookies(domain: String) -> Option<Vec<Cookie<'static>>> {
     let cookie = GLOBAL_COOKIE.lock().await;
     return cookie.get(&domain).cloned();
 }
@@ -29,7 +29,7 @@ pub async fn get_cookies(domain: String) -> Option<Vec<Cookie<'static>>> {
 //     cookie.clear();
 // }
 
-pub async fn get_cookie_str(domain: String) -> RegResult<String> {
+pub(crate) async fn get_cookie_str(domain: String) -> RegResult<String> {
     if let Some(cookies) = get_cookies(domain.clone()).await {
         return Ok(cookies_to_str(&cookies));
     } else {

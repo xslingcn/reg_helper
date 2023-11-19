@@ -48,7 +48,7 @@ impl Config {
 }
 
 lazy_static! {
-    pub static ref CONFIG: Config = match Config::new("config.toml") {
+    pub(crate) static ref CONFIG: Config = match Config::new("config.toml") {
         Ok(c) => c,
         Err(e) => {
             println!("{}", e);
