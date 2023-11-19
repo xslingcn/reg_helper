@@ -4,6 +4,8 @@ pub type RegResult<T> = Result<T, RegError>;
 
 #[derive(Debug, Error)]
 pub enum RegError {
+    #[error("fail to load config: {0}")]
+    ConfigLoadError(String),
     #[error("cookie not found for: {0}")]
     CookieNotFound(String),
     #[error("schedule not updated: {0}")]
@@ -18,8 +20,6 @@ pub enum RegError {
     IMAPError(#[from] imap::error::Error),
     #[error("native_tls error: {0}")]
     TLSError(#[from] native_tls::Error),
-    // #[error("{0}")]
-    // CustomError(String),
 }
 
 pub(crate) trait PassCookieNotFound {
@@ -34,21 +34,3 @@ impl PassCookieNotFound for RegResult<String> {
         }
     }
 }
-
-// impl From<WebDriverError> for RegError {
-//     fn from(ce: WebDriverError) -> Self {
-//         let ce_string = ce.to_string();
-//         match ce {
-//             x => RegError::FromWebDriverError(x.to_string()),
-//         }
-//     }
-// }
-
-// impl From<reqwest::Error> for RegError {
-//     fn from(ce: reqwest::Error) -> Self {
-//         let ce_string = ce.to_string();
-//         match ce {
-//             x => RegError::FromReqwestError(x.to_string()),
-//         }
-//     }
-// }

@@ -1,11 +1,12 @@
-use crate::register;
-use crate::{config::CONFIG, error::RegResult};
 use chrono::{Duration, Local, TimeZone, Utc};
 use imap::Session;
 use mail_parser::MessageParser;
 use native_tls::{TlsConnector, TlsStream};
 use regex::Regex;
 use std::net::TcpStream;
+
+use crate::register;
+use crate::{config::CONFIG, error::RegResult};
 
 pub fn init_imap_session() -> RegResult<Session<TlsStream<TcpStream>>> {
     let tls = TlsConnector::builder().build()?;

@@ -1,8 +1,9 @@
+use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
+use scraper::{Html, Selector};
+
 use crate::cookie;
 use crate::error::{RegError, RegResult};
 use crate::{config::CONFIG, webdrive};
-use reqwest::header::{HeaderMap, HeaderValue, COOKIE};
-use scraper::{Html, Selector};
 
 pub async fn register(sln: &str) -> RegResult<String> {
     println!("Registering for SLN: {}", sln);
@@ -25,7 +26,7 @@ pub async fn register(sln: &str) -> RegResult<String> {
         Ok("Schedule updated.".to_string())
     } else {
         let reason = parse_status(&body)?;
-        Err(crate::error::RegError::RegFailedError(reason))?
+        Err(RegError::RegFailedError(reason))?
     }
 }
 

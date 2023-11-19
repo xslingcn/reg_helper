@@ -1,8 +1,9 @@
+use thirtyfour::prelude::*;
+use tokio::time::{sleep, Duration};
+
 use crate::config::CONFIG;
 use crate::cookie;
 use crate::error::{PassCookieNotFound, RegError, RegResult};
-use thirtyfour::prelude::*;
-use tokio::time::{sleep, Duration};
 
 async fn create_session() -> RegResult<WebDriver> {
     let caps = DesiredCapabilities::chrome();

@@ -1,5 +1,6 @@
 use chrono::Local;
 use tokio::time::{self, Duration, Instant};
+
 mod config;
 mod email;
 mod register;
@@ -16,35 +17,6 @@ async fn main() {
     let mut interval = time::interval(Duration::from_secs(15));
     let mut session_reinit_timer = time::interval(Duration::from_secs(1 * 60 * 60));
     let mut shib_session_refresh_timer = time::interval(Duration::from_secs(1 * 60 * 60));
-
-    // loop {
-    //     tokio::select! {
-    //         _ = shib_session_refresh_timer.tick() => {
-    //             match register::refresh_shib_session().await {
-    //                 Ok(r) => println!("{}", r),
-    //                 Err(err) => {
-    //                     eprintln!("Error refreshing shib session: {}", err);
-    //                     return;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     let mut imap_session = match email::init_imap_session() {
-    //         Ok(s) => s,
-    //         Err(e) => {
-    //             eprintln!("Failed to initialize IMAP session: {}", e);
-    //             return;
-    //         }
-    //     };
-    //     match email::idle(&mut imap_session).await {
-    //         Ok(r) => println!("{}", r),
-    //         Err(err) => eprintln!("{}", err),
-    //     }
-    //     match email::close_imap_session(&mut imap_session) {
-    //         Ok(_) => println!("Session closed."),
-    //         Err(err) => eprintln!("Failed to close IMAP session: {}", err),
-    //     }
-    // }
 
     println!("Logging into IMAP...");
     let mut session_init_time = Instant::now();
