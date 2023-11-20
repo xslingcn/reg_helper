@@ -11,3 +11,11 @@ quarter = 1
 year = 2024
 netid = "yay"
 password = "bibabopababibo"
+
+[sections]
+[sections.cse414]
+section_sln = 13009
+lecture_sln = 13005
+[sections.cse333]
+section_sln = 12941
+lecture_sln = 12938

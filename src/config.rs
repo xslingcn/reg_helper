@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use serde_derive::Deserialize;
-use std::fs;
+use std::{fs, collections::HashMap};
 use std::process::exit;
 use toml;
 
@@ -10,6 +10,7 @@ use crate::error::{RegError, RegResult};
 pub struct Config {
     pub email: Email,
     pub reg: Registration,
+    pub sections: HashMap<String, Section>,
 }
 
 #[derive(Deserialize)]
@@ -28,6 +29,12 @@ pub struct Registration {
     pub year: u16,
     pub netid: String,
     pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct Section {
+    pub section_sln: u32,
+    pub lecture_sln: u32,
 }
 
 impl Config {
