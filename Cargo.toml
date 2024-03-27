@@ -1,6 +1,6 @@
 [package]
 name = "reg_helper"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,3 +23,4 @@ thirtyfour = "0.31.0"
 selenium-manager = { git = "https://github.com/SeleniumHQ/selenium", branch = "trunk" }
 color-eyre = "0.6.2"
 thiserror = "1.0.50"
+clap = "4.5.4"

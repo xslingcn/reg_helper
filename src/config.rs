@@ -11,6 +11,7 @@ pub struct Config {
     pub email: Email,
     pub reg: Registration,
     pub sections: HashMap<String, Section>,
+    pub switch: HashMap<String, Switch>
 }
 
 #[derive(Deserialize)]
@@ -35,6 +36,12 @@ pub struct Registration {
 pub struct Section {
     pub section_sln: u32,
     pub lecture_sln: u32,
+}
+
+#[derive(Deserialize)]
+pub struct Switch {
+    pub to_drop: Vec<u32>,
+    pub to_add: u32,
 }
 
 impl Config {

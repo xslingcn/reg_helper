@@ -84,6 +84,16 @@ pub(crate) async fn saml_refresh() -> RegResult<String> {
     Ok("SDB session refreshed!".to_string())
 }
 
+
+pub(crate) async fn create_switch_webdriver() -> RegResult<WebDriver> {
+    let driver = create_session().await?;
+
+    add_cookie(&driver, "sdb.admin.uw.edu".to_string()).await?;
+
+    driver.goto("https://sdb.admin.uw.edu/students/UWNetID/register.asp").await?;
+    Ok(driver)
+}
+
 async fn add_cookie(driver: &WebDriver, domain: String) -> RegResult<String> {
     if let Some(cookies) = cookie::get_cookies(domain.clone()).await {
         let url = format!("https://{}/404", domain);

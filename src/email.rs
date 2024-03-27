@@ -47,7 +47,7 @@ pub(crate) async fn idle(imap_session: &mut Session<TlsStream<TcpStream>>) -> Re
 pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>) -> RegResult<String> {
     imap_session.select("INBOX")?;
 
-    let yesterday = (Utc::now() - Duration::days(1)).date_naive();
+    let yesterday = (Utc::now() - Duration::try_days(1).unwrap()).date_naive();
     let date_str = yesterday.format("%d-%b-%Y").to_string();
     let query = format!("UNSEEN SINCE {}", date_str);
     let messages = imap_session.search(query)?;
@@ -56,7 +56,7 @@ pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>
         return Ok("No unread messages.".to_string());
     } else {
         for msg_id in messages.iter() {
-            println!("Loading message `{}`", &msg_id);
+            // println!("Loading message `{}`", &msg_id);
             let message_chain = imap_session.fetch(msg_id.to_string(), "RFC822")?;
             let message = if let Some(m) = message_chain.iter().next() {
                 m
@@ -92,7 +92,7 @@ pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>
                 imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
                 let now = Utc::now();
                 if now.signed_duration_since(Utc.timestamp_opt(date.to_timestamp(), 0).unwrap())
-                    < Duration::minutes(1)
+                    < Duration::try_minutes(1).unwrap()
                 {
                     let re = Regex::new(r"SLN: (\d{5})").unwrap();
                     if let Some(caps) = re.captures(&content) {
@@ -108,5 +108,23 @@ pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>
             }
         }
         Ok("Read complete and nothing interesting.".to_string())
+    }
+}
+
+pub(crate) async fn reinit_imap_session(session: &mut Session<TlsStream<TcpStream>>) {
+    match close_imap_session(session) {
+        Ok(_) => println!("Session closed."),
+        Err(err) => eprintln!("Failed to close IMAP session: {}", err),
+    }
+
+    match init_imap_session() {
+        Ok(new_session) => {
+            println!("IMAP session reinitialized.");
+            *session = new_session;
+        }
+        Err(e) => {
+            eprintln!("Failed to reinitialize IMAP session: {}", e);
+            return;
+        }
     }
 }

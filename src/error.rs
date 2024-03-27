@@ -12,6 +12,8 @@ pub enum RegError {
     RegFailedError(String),
     #[error("element not found: {0}")]
     ElementNotFound(String),
+    #[error("command not found: {0}")]
+    CommandNotFound(String),
     #[error("webdriver error: {0}")]
     WebDriverError(#[from] thirtyfour::error::WebDriverError),
     #[error("reqwest error: {0}")]

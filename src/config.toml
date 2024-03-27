@@ -17,5 +17,11 @@ password = "bibabopababibo"
 section_sln = 13009
 lecture_sln = 13005
 [sections.cse333]
-section_sln = 12941
-lecture_sln = 12938
+section_sln = 12810
+lecture_sln = 12808
+
+# switch from CSE 312 AB (sln: 12779, 12781) to CSE 333 AB (sln: 12808, 12810), will lookup the section first
+[switch]
+[switch.cse312_cse333]
+to_drop = [12779, 12781]
+to_add = 12810
