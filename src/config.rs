@@ -8,10 +8,16 @@ use crate::error::{RegError, RegResult};
 
 #[derive(Deserialize)]
 pub struct Config {
+    pub webdrive: WebDrive,
     pub email: Email,
     pub reg: Registration,
     pub sections: HashMap<String, Section>,
     pub switch: HashMap<String, Switch>
+}
+
+#[derive(Deserialize)]
+pub struct WebDrive {
+    pub port: u16
 }
 
 #[derive(Deserialize)]

@@ -7,7 +7,8 @@ use crate::error::{PassCookieNotFound, RegError, RegResult};
 
 async fn create_session() -> RegResult<WebDriver> {
     let caps = DesiredCapabilities::chrome();
-    let driver = WebDriver::new("http://localhost:9515", caps).await?;
+    let server_url = format!("http://localhost:{}", CONFIG.webdrive.port);
+    let driver = WebDriver::new(&server_url, caps).await?;
     Ok(driver)
 }
 
