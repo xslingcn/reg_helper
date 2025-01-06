@@ -35,7 +35,7 @@ pub(crate) async fn switch(switch: &Switch) -> RegResult<String> {
 
     // add class
     let sln_input_xpath = "//input[contains(@name,'sln') and not(@type='HIDDEN') and @value='']";
-    let sln_inputs = driver.find_all(By::XPath(&sln_input_xpath)).await?;
+    let sln_inputs = driver.find_all(By::XPath(sln_input_xpath)).await?;
 
     if sln_inputs.len() < 2 {
         Err(RegError::RegFailedError("Could not find SLN inputs".to_string()))?

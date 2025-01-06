@@ -6,15 +6,15 @@ use tokio::sync::Mutex;
 use crate::error::{RegResult, RegError};
 
 lazy_static! {
-    static ref GLOBAL_COOKIE: Arc<Mutex<HashMap<String, Vec<Cookie<'static>>>>> = Arc::new(Mutex::new(HashMap::new()));
+    static ref GLOBAL_COOKIE: Arc<Mutex<HashMap<String, Vec<Cookie>>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
-pub(crate) async fn update_cookies(domain: String, new_cookies: Vec<Cookie<'static>>) {
+pub(crate) async fn update_cookies(domain: String, new_cookies: Vec<Cookie>) {
     let mut cookie = GLOBAL_COOKIE.lock().await;
     cookie.insert(domain, new_cookies);
 }
 
-pub(crate) async fn get_cookies(domain: String) -> Option<Vec<Cookie<'static>>> {
+pub(crate) async fn get_cookies(domain: String) -> Option<Vec<Cookie>> {
     let cookie = GLOBAL_COOKIE.lock().await;
     return cookie.get(&domain).cloned();
 }
@@ -37,10 +37,10 @@ pub(crate) async fn get_cookie_str(domain: String) -> RegResult<String> {
     }
 }
 
-fn cookies_to_str(cookies: &Vec<Cookie<'static>>) -> String {
+fn cookies_to_str(cookies: &Vec<Cookie>) -> String {
     return cookies
         .iter()
-        .map(|cookie| format!("{}={}", cookie.name(), cookie.value()))
+        .map(|cookie| format!("{}={}", cookie.name, cookie.value))
         .collect::<Vec<String>>()
         .join("; ");
 }

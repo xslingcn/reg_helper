@@ -81,18 +81,18 @@ pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>
                 };
 
             // notify-noreply@uw.edu
-            if from.address().unwrap().contains("notify-noreply@uw.edu") {
+            if from.address().unwrap().contains("notify-noreply@uw.edu") {                
                 println!("Notify.UW email found!");
                 println!(
                     "Date: `{}`\nFrom: `{}`\nContent: `{}`",
-                    date.to_rfc3339(),
+                    date.to_timezone(Local::now().offset().local_minus_utc() as i64).to_rfc3339(),
                     from.address().unwrap(),
                     content
                 );
                 imap_session.store(msg_id.to_string(), "+FLAGS (\\Seen)")?;
                 let now = Utc::now();
                 if now.signed_duration_since(Utc.timestamp_opt(date.to_timestamp(), 0).unwrap())
-                    < Duration::try_minutes(1).unwrap()
+                    < Duration::try_minutes(3).unwrap()
                 {
                     let re = Regex::new(r"SLN: (\d{5})").unwrap();
                     if let Some(caps) = re.captures(&content) {
@@ -101,7 +101,7 @@ pub(crate) async fn fetch_email(imap_session: &mut Session<TlsStream<TcpStream>>
                         return register::register(sln).await;
                     }
                 } else {
-                    println!("That's been too long ago (> 1 min) :(");
+                    println!("That's been too long ago (> 3 min) :(");
                 }
             } else {
                 println!("Not from Notify.UW.");
