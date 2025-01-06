@@ -97,10 +97,13 @@ pub(crate) async fn create_switch_webdriver() -> RegResult<WebDriver> {
 
 async fn add_cookie(driver: &WebDriver, domain: String) -> RegResult<String> {
     if let Some(cookies) = cookie::get_cookies(domain.clone()).await {
-        let url = format!("https://{}/404", domain);
+        let url = format!("https://{}", domain);
         println!("Adding cookies for {}", &url);
         driver.goto(&url).await?;
-        for cookie in cookies {
+        for mut cookie in cookies {
+            if cookie.name.starts_with("__Host-") {
+                cookie.domain = None;
+            }
             driver.add_cookie(cookie.clone()).await?;
         }
         Ok("Cookies added!".to_string())
